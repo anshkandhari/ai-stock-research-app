@@ -1,7 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException
+from pydantic import BaseModel
 import yfinance as yf
 
 app = FastAPI()
+
+class StockResponse(BaseModel):
+    symbol: str
+    company: str | None
+    price: float | None
+    market_cap: int | None
 
 @app.get("/")
 def home():
@@ -11,8 +18,10 @@ def home():
 def health():
     return {"status": "ok"}
 
-@app.get("/stock")
+@app.get("/stock", response_model=StockResponse)
 def get_stock(symbol: str):
+    if not data:
+        raise HTTPException(status_code=404, detail="Stock not found")
     stock = yf.Ticker(symbol)
     data = stock.info
 

@@ -17,10 +17,16 @@
         async function getStock() {
             const symbol = document.getElementById("symbol").value;
 
-            const response = await fetch(`http://127.0.0.1:8001/ai-stock-summary?symbol=${symbol}`);
+            const response = await fetch(`http://impartial-flow-production.up.railway.app/ai-stock-summary?symbol=${symbol}`);
             const data = await response.json();
 
             document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+            } catch (error) {
+                alert("Something went wrong. Try again.");
+}
         }
     </script>
 

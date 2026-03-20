@@ -6,7 +6,6 @@ from groq import Groq
 import os
 from fastapi.middleware.cors import CORSMiddleware
 
-
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 app = FastAPI()

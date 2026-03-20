@@ -4,11 +4,20 @@ import yfinance as yf
 from typing import Optional
 from groq import Groq
 import os
+from fastapi.middleware.cors import CORSMiddleware
+
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 class StockResponse(BaseModel):
     symbol: str
     company: Optional[str]
@@ -40,8 +49,14 @@ def get_stock(symbol: str):
             "market_cap": data.get("marketCap")
         }
 
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error fetching stock data")
+    except Exception as e:
+        return {
+        "symbol": symbol,
+        "company": company,
+        "price": price,
+        "market_cap": market_cap,
+        "ai_summary": "AI service temporarily unavailable"
+    }
 
 @app.get("/ai-stock-summary")
 def ai_stock_summary(symbol: str):
@@ -70,26 +85,24 @@ def ai_stock_summary(symbol: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 def generate_summary(company, price, market_cap):
-    prompt = f"""
-Explain this company in simple terms:
+    try:
+        prompt = f"""
+Explain the company:
 
 Company: {company}
 Price: {price}
 Market Cap: {market_cap}
 
-Include:
-- what the company does
-- recent outlook
-- risks
-
-Keep it under 100 words.
+Keep it short.
 """
 
-    response = client.chat.completions.create(
-        model="groq/compound",
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
+        response = client.chat.completions.create(
+            model="groq/compound",
+            messages=[{"role": "user", "content": prompt}]
+        )
 
+        return response.choices[0].message.content
+
+    except Exception:
+        return "AI summary not available right now"
     return response.choices[0].message.content
